@@ -32,6 +32,7 @@ struct Particle {
 struct Game {
 	//particle management
 	struct Particle particles[PARTICLE_NUMBER];
+	float rules[PARTICLE_TYPES][PARTICLE_TYPES];
 	//game engine
 	SDL_Window *window;
 	SDL_Renderer *renderer;
@@ -94,6 +95,14 @@ void game_free(struct Game *g) {
 	printf("All Clean!\n");
 }
 
+void rules_new(struct Game *g) {
+	for (int i = 0; i < PARTICLE_TYPES; i++) {
+		for (int j = 0; j < PARTICLE_TYPES; j++) {
+			g->rules[i][j] = ((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f;
+		}
+	}
+}
+
 void particles_new(struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		g->particles[i].x = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_WIDTH;
@@ -119,7 +128,6 @@ void particles_draw(const struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		particle_rect.x = g->particles[i].x - 0.5 * PARTICLE_SIZE;
 		particle_rect.y = g->particles[i].y - 0.5 * PARTICLE_SIZE;
-		//fix so that particles can not be the same color as background
 		SDL_SetRenderDrawColor(g->renderer, red[g->particles[i].type], green[g->particles[i].type], blue[g->particles[i].type], 255);
 		SDL_RenderFillRect(g->renderer, &particle_rect);
 	}
