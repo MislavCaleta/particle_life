@@ -107,7 +107,22 @@ void particles_new(struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		g->particles[i].x = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_WIDTH;
 		g->particles[i].y = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_HEIGHT;
+		//for now add random velocity to each particle
+		g->particles[i].x_vel = ((float)rand() / (float)RAND_MAX) * 4.0f - 2.0f;
+		g->particles[i].y_vel = ((float)rand() / (float)RAND_MAX) * 4.0f - 2.0f;
 		g->particles[i].type = rand() % PARTICLE_TYPES;
+	}
+}
+
+void particles_update(struct Game *g) {
+	for (int i = 0; i < PARTICLE_NUMBER; i++) {
+		g->particles[i].x += g->particles[i].x_vel;
+		g->particles[i].y += g->particles[i].y_vel;
+
+		if (g->particles[i].x < 0) g->particles[i].x += WINDOW_WIDTH;
+		else if (g->particles[i].x >= WINDOW_WIDTH) g->particles[i].x -= WINDOW_WIDTH;
+		if (g->particles[i].y < 0) g->particles[i].y += WINDOW_HEIGHT;
+		else if (g->particles[i].y >= WINDOW_HEIGHT) g->particles[i].y -= WINDOW_HEIGHT;
 	}
 }
 
@@ -143,7 +158,9 @@ void game_draw(const struct Game *g) {
 void game_run(struct Game *g) {
 	while (g->is_running) {
 		game_events(g);
+		particles_update(g);
 		game_draw(g);
+		SDL_Delay(16);
 	}
 }
 
