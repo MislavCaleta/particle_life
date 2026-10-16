@@ -12,6 +12,14 @@
 //particle definitions
 #define PARTICLE_SIZE 3.0f
 #define PARTICLE_NUMBER 200
+#define PARTICLE_TYPES 6
+#define RED {255, 200, 150, 100, 50, 0}
+#define GREEN {0, 50, 100, 150, 200, 255}
+#define BLUE {100, 150, 50, 0, 255, 200}
+
+const Uint8 red[PARTICLE_TYPES] = RED;
+const Uint8 green[PARTICLE_TYPES] = GREEN;
+const Uint8 blue[PARTICLE_TYPES] = BLUE;
 
 struct Particle {
 	float x;
@@ -90,6 +98,7 @@ void particles_new(struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		g->particles[i].x = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_WIDTH;
 		g->particles[i].y = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_HEIGHT;
+		g->particles[i].type = rand() % PARTICLE_TYPES;
 	}
 }
 
@@ -111,7 +120,7 @@ void particles_draw(const struct Game *g) {
 		particle_rect.x = g->particles[i].x - 0.5 * PARTICLE_SIZE;
 		particle_rect.y = g->particles[i].y - 0.5 * PARTICLE_SIZE;
 		//fix so that particles can not be the same color as background
-		SDL_SetRenderDrawColor(g->renderer, (Uint8)rand(), (Uint8)rand(), (Uint8)rand(), 255);
+		SDL_SetRenderDrawColor(g->renderer, red[g->particles[i].type], green[g->particles[i].type], blue[g->particles[i].type], 255);
 		SDL_RenderFillRect(g->renderer, &particle_rect);
 	}
 }
