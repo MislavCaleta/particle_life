@@ -2,6 +2,7 @@
 #include <SDL3/SDL_main.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
 //game init definitions
 #define SDL_INIT_FLAGS SDL_INIT_VIDEO
@@ -11,8 +12,10 @@
 
 //particle definitions
 #define PARTICLE_SIZE 3.0f
-#define PARTICLE_NUMBER 200
+#define PARTICLE_NUMBER 1000
 #define PARTICLE_TYPES 6
+#define REPULSION_RADIUS 20.0f
+#define FRICTION 0.85
 #define RED {255, 200, 150, 100, 50, 0}
 #define GREEN {0, 50, 100, 150, 200, 255}
 #define BLUE {100, 150, 50, 0, 255, 200}
@@ -107,17 +110,43 @@ void particles_new(struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		g->particles[i].x = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_WIDTH;
 		g->particles[i].y = ((float)rand() / (float)RAND_MAX) * (float)WINDOW_HEIGHT;
-		//for now add random velocity to each particle
-		g->particles[i].x_vel = ((float)rand() / (float)RAND_MAX) * 4.0f - 2.0f;
-		g->particles[i].y_vel = ((float)rand() / (float)RAND_MAX) * 4.0f - 2.0f;
 		g->particles[i].type = rand() % PARTICLE_TYPES;
 	}
 }
 
 void particles_update(struct Game *g) {
 	for (int i = 0; i < PARTICLE_NUMBER; i++) {
+		for (int j = 0; j < PARTICLE_NUMBER; j++) {
+			if (i == j) continue;
+
+			float dx = g->particles[j].x - g->particles[i].x;
+		       	float dy = g->particles[j].y - g->particles[i].y;	
+			
+			//We need to take care of the wraping of the screen when calculating distances
+			if (dx > WINDOW_WIDTH * 0.5f) dx -= WINDOW_WIDTH;
+			else if (dx < -WINDOW_WIDTH * 0.5f) dx += WINDOW_WIDTH;
+			if (dy > WINDOW_HEIGHT * 0.5f) dy -= WINDOW_HEIGHT;
+			else if (dy < -WINDOW_HEIGHT * 0.5f) dy += WINDOW_HEIGHT;
+
+			float distance = sqrtf(dx * dx + dy * dy);
+
+			if (distance > 0.0f && distance < REPULSION_RADIUS) {
+				float force = distance / REPULSION_RADIUS - 1.0f;
+				
+				//force here is equal to acceleration as m=1 for every particle
+				g->particles[i].x_vel += (dx / distance) * force * 0.5f;
+				g->particles[i].y_vel += (dy / distance) * force * 0.5f;
+			}
+		}
+	}
+
+	for (int i = 0; i < PARTICLE_NUMBER; i++) {
 		g->particles[i].x += g->particles[i].x_vel;
 		g->particles[i].y += g->particles[i].y_vel;
+		
+		//we need friction so that velocity does not accummulate indefinetly
+		g->particles[i].x_vel *= FRICTION;
+		g->particles[i].y_vel *= FRICTION;
 
 		if (g->particles[i].x < 0) g->particles[i].x += WINDOW_WIDTH;
 		else if (g->particles[i].x >= WINDOW_WIDTH) g->particles[i].x -= WINDOW_WIDTH;
