@@ -45,12 +45,12 @@ struct Game {
 };
 
 bool game_init(struct Game *g);
-bool game_new(struct Game *g);
+bool game_new(struct Game **game);
 void game_events(struct Game *g);
 void game_run(struct Game *g);
 void rules_new(struct Game *g);
 void particles_new(struct Game *g);
-void game_free(struct Game *g);
+void game_free(struct Game **game);
 
 bool game_init(struct Game *g) {
 	if(!SDL_Init(SDL_INIT_FLAGS)) {
@@ -73,7 +73,14 @@ bool game_init(struct Game *g) {
 	return true;
 }
 
-bool game_new(struct Game *g) {
+bool game_new(struct Game **game) {
+	*game = calloc(1, sizeof(struct Game));
+	if (*game == NULL) {
+		perror("Error allocating game structure");
+		return false;
+	}
+	struct Game *g = *game;
+
 	if (!game_init(g)) {
 		return false;
 	}
@@ -86,19 +93,28 @@ bool game_new(struct Game *g) {
 	return true;
 }
 
-void game_free(struct Game *g) {
-	if (g->renderer != NULL) {
-		SDL_DestroyRenderer(g->renderer);
-		g->renderer = NULL;
-	}
+void game_free(struct Game **game) {
+	if (*game != NULL) {
+		struct Game *g = *game;
 
-	if (g->window != NULL) {
-		SDL_DestroyWindow(g->window);
-		g->window = NULL;
-	}
+		if (g->renderer != NULL) {
+			SDL_DestroyRenderer(g->renderer);
+			g->renderer = NULL;
+		}
 
-	SDL_Quit();
-	printf("All Clean!\n");
+		if (g->window != NULL) {
+			SDL_DestroyWindow(g->window);
+			g->window = NULL;
+		}
+
+		SDL_Quit();
+
+		free(g);
+		g = NULL;
+		*game = NULL;
+
+		printf("All Clean!\n");
+	}
 }
 
 void rules_new(struct Game *g) {
@@ -218,10 +234,10 @@ void game_run(struct Game *g) {
 
 int main(void) {
 	int exit_status = EXIT_FAILURE;
-	struct Game game = {0};
+	struct Game *game = NULL;
 
 	if(game_new(&game)) {
-		game_run(&game);
+		game_run(game);
 		exit_status = EXIT_SUCCESS;
 	}
 
