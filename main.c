@@ -12,9 +12,10 @@
 
 //particle definitions
 #define PARTICLE_SIZE 3.0f
-#define PARTICLE_NUMBER 1000
+#define PARTICLE_NUMBER 2000
 #define PARTICLE_TYPES 6
 #define REPULSION_RADIUS 20.0f
+#define INTERACTION_RADIUS 80.0f
 #define FRICTION 0.85
 #define RED {255, 200, 150, 100, 50, 0}
 #define GREEN {0, 50, 100, 150, 200, 255}
@@ -47,6 +48,7 @@ bool game_init(struct Game *g);
 bool game_new(struct Game *g);
 void game_events(struct Game *g);
 void game_run(struct Game *g);
+void rules_new(struct Game *g);
 void particles_new(struct Game *g);
 void game_free(struct Game *g);
 
@@ -77,6 +79,7 @@ bool game_new(struct Game *g) {
 	}
 	srand((unsigned)time(NULL));
 	particles_new(g);
+	rules_new(g);
 
 	g->is_running = true;
 	
@@ -129,10 +132,22 @@ void particles_update(struct Game *g) {
 			else if (dy < -WINDOW_HEIGHT * 0.5f) dy += WINDOW_HEIGHT;
 
 			float distance = sqrtf(dx * dx + dy * dy);
-
-			if (distance > 0.0f && distance < REPULSION_RADIUS) {
-				float force = distance / REPULSION_RADIUS - 1.0f;
-				
+			
+			if (distance > 0.0f && distance < INTERACTION_RADIUS) {
+				float force;
+				//universal repulsion if two particles get too close
+				if (distance < REPULSION_RADIUS) {
+					force = distance / REPULSION_RADIUS - 1.0f;
+				}
+				//interaction between types (between REPULSION_RADIUS and INTERACTION_RADIUS)
+				else {
+					float interaction = g->rules[g->particles[i].type][g->particles[j].type];
+					float range = INTERACTION_RADIUS - REPULSION_RADIUS;
+					float norm_distance = (distance - REPULSION_RADIUS) / range;
+					//interaction between types is implemented using a triangular function between two radii
+					//maximum force present in the midpoint
+					force = interaction * (1.0f - fabsf(norm_distance * 2.0f - 1.0f));
+				}			
 				//force here is equal to acceleration as m=1 for every particle
 				g->particles[i].x_vel += (dx / distance) * force * 0.5f;
 				g->particles[i].y_vel += (dy / distance) * force * 0.5f;
