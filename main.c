@@ -176,6 +176,14 @@ void game_events(struct Game *g) {
 			case SDL_EVENT_QUIT:
 				g->is_running = false;
 				break;
+			case SDL_EVENT_KEY_DOWN:
+				switch (g->event.key.scancode) {
+					case SDL_SCANCODE_R:
+						rules_new(g);
+						break;
+					default:
+						break;
+				}
 			default:
 				break;
 		}
